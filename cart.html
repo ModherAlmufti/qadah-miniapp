@@ -39,11 +39,88 @@
   <div class="state">جارٍ التحميل...</div>
 </main>
 
+<div class="modal-overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">إتمام الطلب</h2>
+    <p class="modal-sub">عبّئ بيانات الطلب. الأسعار تُحسب من الخادم عند التأكيد.</p>
+
+    <div class="form-section">بيانات صاحب الطلب</div>
+    <div class="field">
+      <label for="cName">الاسم *</label>
+      <input id="cName" type="text" autocomplete="name">
+    </div>
+    <div class="two">
+      <div class="field">
+        <label for="cPhone">رقم الهاتف *</label>
+        <input id="cPhone" type="tel" inputmode="tel" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label for="cEmail">البريد (اختياري)</label>
+        <input id="cEmail" type="email" autocomplete="email">
+      </div>
+    </div>
+
+    <div class="form-section">بيانات المستلم</div>
+    <div class="two">
+      <div class="field">
+        <label for="rName">اسم المستلم *</label>
+        <input id="rName" type="text">
+      </div>
+      <div class="field">
+        <label for="rPhone">هاتف المستلم *</label>
+        <input id="rPhone" type="tel" inputmode="tel">
+      </div>
+    </div>
+
+    <div class="form-section">التوصيل</div>
+    <div class="field">
+      <label for="dAddress">العنوان *</label>
+      <textarea id="dAddress"></textarea>
+    </div>
+    <div class="two">
+      <div class="field">
+        <label for="dDate">يوم التوصيل (اختياري)</label>
+        <input id="dDate" type="date">
+      </div>
+      <div class="field">
+        <label for="dSlot">الفترة (اختياري)</label>
+        <select id="dSlot">
+          <option value="">اختر</option>
+          <option value="صباحاً">صباحاً</option>
+          <option value="ظهراً">ظهراً</option>
+          <option value="مساءً">مساءً</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="dNotes">ملاحظات التوصيل (اختياري)</label>
+      <textarea id="dNotes"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="gift">رسالة الهدية (اختياري)</label>
+      <textarea id="gift"></textarea>
+    </div>
+
+    <p class="modal-error" id="modalError"></p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="cancelBtn">رجوع</button>
+      <button type="button" class="btn-primary" id="confirmBtn">تأكيد الطلب</button>
+    </div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="cart.js"></script>
 <script src="superqi.js"></script>
 <script>
+  var CREATE_ORDER_URL = SUPABASE_URL + "/functions/v1/create_order";
+
   var view = document.getElementById("view");
+  var overlay = document.getElementById("overlay");
+  var modalError = document.getElementById("modalError");
+  var confirmBtn = document.getElementById("confirmBtn");
   var PRODUCTS = {};
 
   function setState(html, isError) {
@@ -115,8 +192,100 @@
         '<div class="summary-row"><span>التوصيل</span><span class="muted">يُحسب لاحقاً</span></div>' +
         '<div class="summary-row summary-total"><span>الإجمالي</span><span>' + formatPrice(subtotal) + " د.ع</span></div>" +
       "</div>" +
-      '<button type="button" class="checkout-btn" data-action="checkout">إتمام الطلب</button>' +
-      '<p class="checkout-note" id="note" hidden>إتمام الطلب (إنشاء الطلب والدفع) سيُفعّل قريباً.</p>';
+      '<button type="button" class="checkout-btn" data-action="checkout">إتمام الطلب</button>';
+  }
+
+  function showSuccess(order) {
+    overlay.classList.remove("open");
+    Cart.clear();
+    var total = formatPrice(order.total) + " د.ع";
+    var code = escapeHtml(order.order_code || "");
+    view.innerHTML =
+      '<div class="success">' +
+        '<div class="tick">✓</div>' +
+        "<h2>تم استلام طلبك</h2>" +
+        '<div class="code">رقم الطلب: ' + code + "</div>" +
+        '<div class="total">الإجمالي: ' + total + "</div>" +
+        '<a href="index.html">العودة إلى الكتالوج</a>' +
+      "</div>";
+  }
+
+  function openModal() {
+    modalError.classList.remove("show");
+    overlay.classList.add("open");
+  }
+  function closeModal() {
+    overlay.classList.remove("open");
+  }
+  function showError(msg) {
+    modalError.textContent = msg;
+    modalError.classList.add("show");
+  }
+
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
+  async function submitOrder() {
+    var customerName = val("cName");
+    var customerPhone = val("cPhone");
+    var recipientName = val("rName");
+    var recipientPhone = val("rPhone");
+    var address = val("dAddress");
+
+    if (!customerName || !customerPhone) { showError("الرجاء إدخال اسم صاحب الطلب ورقم هاتفه."); return; }
+    if (!recipientName || !recipientPhone) { showError("الرجاء إدخال اسم المستلم ورقم هاتفه."); return; }
+    if (!address) { showError("الرجاء إدخال عنوان التوصيل."); return; }
+
+    var payload = {
+      channel: "superqi",
+      items: Cart.items(),
+      customer: { name: customerName, phone: customerPhone, email: val("cEmail") || null },
+      recipient: { name: recipientName, phone: recipientPhone },
+      delivery: {
+        address: address,
+        date: val("dDate") || null,
+        slot: val("dSlot") || null,
+        notes: val("dNotes") || null
+      },
+      gift_message: val("gift") || null,
+      addons: []
+    };
+
+    modalError.classList.remove("show");
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "جارٍ الإرسال...";
+
+    try {
+      var res = await fetch(CREATE_ORDER_URL, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json();
+
+      if (data && data.ok) {
+        showSuccess(data.order);
+      } else {
+        var code = data && data.error;
+        var msg =
+          code === "product_unavailable" ? "أحد المنتجات لم يعد متاحاً. حدّث سلتك." :
+          (data && data.message) ? data.message :
+          "تعذّر إنشاء الطلب. حاول مرة أخرى.";
+        showError(msg);
+      }
+    } catch (err) {
+      console.error(err);
+      showError("تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.");
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "تأكيد الطلب";
+    }
   }
 
   view.addEventListener("click", function (e) {
@@ -135,12 +304,14 @@
       Cart.remove(id);
       renderCart();
     } else if (action === "checkout") {
-      // TODO: call the create_order Edge Function (server-side pricing), then SuperQi payment.
-      // Both are the shared money path; payment is blocked on Qi credentials.
-      SuperQi.toast("إتمام الطلب قريباً");
-      var note = document.getElementById("note");
-      if (note) note.hidden = false;
+      openModal();
     }
+  });
+
+  document.getElementById("cancelBtn").addEventListener("click", closeModal);
+  confirmBtn.addEventListener("click", submitOrder);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeModal();
   });
 
   (async function load() {
@@ -153,7 +324,6 @@
       var rows = await fetchCatalog(query);
       PRODUCTS = {};
       rows.forEach(function (p) { PRODUCTS[p.id] = p; });
-      // Reconcile: drop lines whose product was deleted or set inactive.
       items.forEach(function (l) {
         if (!PRODUCTS[l.id]) Cart.remove(l.id);
       });
