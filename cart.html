@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>قدح</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<!-- SuperQi web-view JSAPI bridge. Injected only inside the app container, so no 404 in a normal browser. -->
+<script>
+  (function () {
+    var ua = navigator.userAgent || "";
+    if (/AlipayClient|mPaaSClient|MiniProgram|SuperQi|QiNEO/i.test(ua)) {
+      var s = document.createElement("script");
+      s.src = "https://appx/web-view.min.js";
+      document.head.appendChild(s);
+    }
+  })();
+</script>
+</head>
+<body>
+<header class="app-header">
+  <a class="brand-link" href="index.html"><div class="brand">قدح</div></a>
+  <a class="cart-link" href="cart.html" aria-label="السلة">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <path d="M3 6h18"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+    <span class="cart-badge" data-cart-count>0</span>
+  </a>
+</header>
+
+<a class="back-link" href="index.html">متابعة التسوق</a>
+
+<main id="view" aria-live="polite">
+  <div class="state">جارٍ التحميل...</div>
+</main>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="superqi.js"></script>
+<script>
+  var view = document.getElementById("view");
+  var PRODUCTS = {};
+
+  function setState(html, isError) {
+    view.innerHTML =
+      '<div class="state' + (isError ? " error" : "") + '">' + html + "</div>";
+  }
+
+  function showEmpty() {
+    view.innerHTML =
+      '<div class="empty">سلتك فارغة.<br><a href="index.html">تصفّح الكتالوج</a></div>';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function qtyOf(id) {
+    var line = Cart.items().find(function (l) { return l.id === id; });
+    return line ? line.qty : 0;
+  }
+
+  function lineHtml(p, qty) {
+    var name = escapeHtml(p.name_ar || p.name_en || "");
+    var unit = Number(p.price) || 0;
+    var total = unit * qty;
+    return (
+      '<div class="cart-line">' +
+        '<img class="line-img" src="' + imageUrl(p.image_url) + '" alt="' + name + '" ' +
+        "onerror=\"this.onerror=null;this.src=PLACEHOLDER_IMG;\">" +
+        '<div class="line-body">' +
+          '<div class="line-name">' + name + "</div>" +
+          '<div class="line-unit">' + formatPrice(unit) + ' د.ع للحبة</div>' +
+          '<div class="line-controls">' +
+            '<div class="mini-stepper">' +
+              '<button type="button" data-action="dec" data-id="' + p.id + '" aria-label="إنقاص">‪−‬</button>' +
+              '<span class="mq">' + qty + "</span>" +
+              '<button type="button" data-action="inc" data-id="' + p.id + '" aria-label="زيادة">+</button>' +
+            "</div>" +
+            '<button type="button" class="remove-btn" data-action="remove" data-id="' + p.id + '">حذف</button>' +
+          "</div>" +
+        "</div>" +
+        '<div class="line-total">' + formatPrice(total) + ' <span class="cur">د.ع</span></div>' +
+      "</div>"
+    );
+  }
+
+  function renderCart() {
+    var lines = Cart.items().filter(function (l) { return PRODUCTS[l.id]; });
+    if (!lines.length) { showEmpty(); return; }
+
+    var pieces = 0;
+    var subtotal = 0;
+    var rows = lines.map(function (l) {
+      var p = PRODUCTS[l.id];
+      pieces += l.qty;
+      subtotal += (Number(p.price) || 0) * l.qty;
+      return lineHtml(p, l.qty);
+    }).join("");
+
+    view.innerHTML =
+      '<div class="cart-list">' + rows + "</div>" +
+      '<div class="summary">' +
+        '<div class="summary-row"><span>عدد القطع</span><span>' + pieces + "</span></div>" +
+        '<div class="summary-row"><span>المجموع الفرعي</span><span>' + formatPrice(subtotal) + " د.ع</span></div>" +
+        '<div class="summary-row"><span>التوصيل</span><span class="muted">يُحسب لاحقاً</span></div>' +
+        '<div class="summary-row summary-total"><span>الإجمالي</span><span>' + formatPrice(subtotal) + " د.ع</span></div>" +
+      "</div>" +
+      '<button type="button" class="checkout-btn" data-action="checkout">إتمام الطلب</button>' +
+      '<p class="checkout-note" id="note" hidden>إتمام الطلب (إنشاء الطلب والدفع) سيُفعّل قريباً.</p>';
+  }
+
+  view.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    var action = btn.getAttribute("data-action");
+    var id = btn.getAttribute("data-id");
+
+    if (action === "inc") {
+      Cart.setQty(id, qtyOf(id) + 1);
+      renderCart();
+    } else if (action === "dec") {
+      var q = qtyOf(id);
+      if (q > 1) { Cart.setQty(id, q - 1); renderCart(); }
+    } else if (action === "remove") {
+      Cart.remove(id);
+      renderCart();
+    } else if (action === "checkout") {
+      // TODO: call the create_order Edge Function (server-side pricing), then SuperQi payment.
+      // Both are the shared money path; payment is blocked on Qi credentials.
+      SuperQi.toast("إتمام الطلب قريباً");
+      var note = document.getElementById("note");
+      if (note) note.hidden = false;
+    }
+  });
+
+  (async function load() {
+    var items = Cart.items();
+    if (!items.length) { showEmpty(); return; }
+    try {
+      var ids = items.map(function (l) { return l.id; });
+      var query =
+        "select=id,name_ar,name_en,price,image_url&id=in.(" + ids.join(",") + ")";
+      var rows = await fetchCatalog(query);
+      PRODUCTS = {};
+      rows.forEach(function (p) { PRODUCTS[p.id] = p; });
+      // Reconcile: drop lines whose product was deleted or set inactive.
+      items.forEach(function (l) {
+        if (!PRODUCTS[l.id]) Cart.remove(l.id);
+      });
+      renderCart();
+    } catch (err) {
+      console.error(err);
+      setState("تعذّر تحميل السلة. تحقق من الاتصال وحاول مرة أخرى.", true);
+    }
+  })();
+</script>
+</body>
+</html>
