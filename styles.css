@@ -17,8 +17,13 @@ html, body {
   padding: 0;
 }
 
+html { background: #e7ddcc; }
+
 body {
   direction: rtl;
+  max-width: 500px;
+  margin: 0 auto;
+  min-height: 100vh;
   background: var(--cream-page);
   color: var(--ink);
   font-family: "Tajawal", "Segoe UI", Tahoma, sans-serif;
