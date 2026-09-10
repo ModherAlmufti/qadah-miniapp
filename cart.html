@@ -117,6 +117,18 @@
 <script>
   var CREATE_ORDER_URL = SUPABASE_URL + "/functions/v1/create_order";
 
+  // Local (not UTC) today as YYYY-MM-DD, so the date picker cannot go before today.
+  function todayStr() {
+    var t = new Date();
+    var m = String(t.getMonth() + 1).padStart(2, "0");
+    var day = String(t.getDate()).padStart(2, "0");
+    return t.getFullYear() + "-" + m + "-" + day;
+  }
+  (function () {
+    var dateEl = document.getElementById("dDate");
+    if (dateEl) dateEl.min = todayStr();
+  })();
+
   var view = document.getElementById("view");
   var overlay = document.getElementById("overlay");
   var modalError = document.getElementById("modalError");
@@ -238,6 +250,12 @@
     if (!recipientName || !recipientPhone) { showError("الرجاء إدخال اسم المستلم ورقم هاتفه."); return; }
     if (!address) { showError("الرجاء إدخال عنوان التوصيل."); return; }
 
+    var dDate = val("dDate");
+    if (dDate && dDate < todayStr()) {
+      showError("لا يمكن اختيار تاريخ توصيل في الماضي.");
+      return;
+    }
+
     var payload = {
       channel: "superqi",
       items: Cart.items(),
@@ -245,7 +263,7 @@
       recipient: { name: recipientName, phone: recipientPhone },
       delivery: {
         address: address,
-        date: val("dDate") || null,
+        date: dDate || null,
         slot: val("dSlot") || null,
         notes: val("dNotes") || null
       },
