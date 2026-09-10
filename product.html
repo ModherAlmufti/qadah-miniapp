@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>قدح</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://appx/web-view.min.js"></script>
+</head>
+<body>
+<header class="app-header">
+  <a class="brand-link" href="index.html"><div class="brand">قدح</div></a>
+  <a class="cart-link" href="cart.html" aria-label="السلة">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <path d="M3 6h18"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+    <span class="cart-badge" data-cart-count>0</span>
+  </a>
+</header>
+
+<a class="back-link" href="index.html">الرجوع إلى الكتالوج</a>
+
+<main id="view" aria-live="polite">
+  <div class="state">جارٍ التحميل...</div>
+</main>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="superqi.js"></script>
+<script>
+  var view = document.getElementById("view");
+
+  function setState(html, isError) {
+    view.innerHTML =
+      '<div class="state' + (isError ? " error" : "") + '">' + html + "</div>";
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function getId() {
+    try {
+      return new URLSearchParams(window.location.search).get("id");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function render(p) {
+    var nameAr = escapeHtml(p.name_ar || p.name_en || "");
+    var nameEn = p.name_en ? '<div class="p-name-en">' + escapeHtml(p.name_en) + "</div>" : "";
+
+    var tags = "";
+    if (p.occasion) tags += '<span class="tag">' + escapeHtml(p.occasion) + "</span>";
+    if (p.category) tags += '<span class="tag">' + escapeHtml(p.category) + "</span>";
+    if (tags) tags = '<div class="tags">' + tags + "</div>";
+
+    var desc = p.note ? '<p class="p-desc">' + escapeHtml(p.note) + "</p>" : "";
+
+    view.innerHTML =
+      '<div class="product">' +
+        '<img class="product-img" src="' + imageUrl(p.image_url) + '" alt="' + nameAr + '" ' +
+        "onerror=\"this.onerror=null;this.src=PLACEHOLDER_IMG;\">" +
+        '<h1 class="p-name-ar">' + nameAr + "</h1>" +
+        nameEn +
+        '<div class="p-price">' + formatPrice(p.price) + ' <span class="cur">د.ع</span></div>' +
+        tags +
+        desc +
+        '<div class="qty-row">' +
+          '<span class="qty-label">الكمية</span>' +
+          '<div class="stepper">' +
+            '<button type="button" id="minus" aria-label="إنقاص">‪−‬</button>' +
+            '<span class="qty-val" id="qtyVal">1</span>' +
+            '<button type="button" id="plus" aria-label="زيادة">+</button>' +
+          "</div>" +
+        "</div>" +
+        '<button type="button" class="add-btn" id="addBtn">إضافة إلى السلة</button>' +
+      "</div>";
+
+    var qty = 1;
+    var qtyVal = document.getElementById("qtyVal");
+    var addBtn = document.getElementById("addBtn");
+
+    document.getElementById("minus").addEventListener("click", function () {
+      if (qty > 1) { qty--; qtyVal.textContent = qty; }
+    });
+    document.getElementById("plus").addEventListener("click", function () {
+      qty++; qtyVal.textContent = qty;
+    });
+
+    addBtn.addEventListener("click", function () {
+      Cart.add(p.id, qty);
+      SuperQi.toast("أُضيف إلى السلة");
+      addBtn.textContent = "تمت الإضافة";
+      addBtn.classList.add("added");
+      setTimeout(function () {
+        addBtn.textContent = "إضافة إلى السلة";
+        addBtn.classList.remove("added");
+      }, 1400);
+    });
+  }
+
+  (async function load() {
+    var id = getId();
+    if (!id) {
+      setState('لم يتم تحديد المنتج. <a href="index.html">عودة إلى الكتالوج</a>');
+      return;
+    }
+    try {
+      var query =
+        "select=id,code,name_ar,name_en,price,category,occasion,note,featured,image_url" +
+        "&id=eq." + encodeURIComponent(id);
+      var rows = await fetchCatalog(query);
+      if (!rows.length) {
+        setState('المنتج غير موجود أو لم يعد متاحاً. <a href="index.html">عودة إلى الكتالوج</a>');
+        return;
+      }
+      render(rows[0]);
+    } catch (err) {
+      console.error(err);
+      setState('تعذّر تحميل المنتج. تحقق من الاتصال وحاول مرة أخرى. <a href="index.html">عودة إلى الكتالوج</a>', true);
+    }
+  })();
+</script>
+</body>
+</html>
