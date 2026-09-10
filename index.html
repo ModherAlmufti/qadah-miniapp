@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>قدح</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<!-- SuperQi web-view JSAPI bridge. Resolves inside the app, harmless in a browser. -->
+<script src="https://appx/web-view.min.js"></script>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">قدح</div>
+  <a class="cart-link" href="cart.html" aria-label="السلة">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <path d="M3 6h18"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+    <span class="cart-badge" data-cart-count>0</span>
+  </a>
+</header>
+
+<div class="search-wrap">
+  <input id="search" class="search" type="search" placeholder="ابحث عن باقة أو مناسبة" autocomplete="off">
+</div>
+
+<div id="filters" class="filters"></div>
+
+<main id="grid" class="grid" aria-live="polite">
+  <div class="state">جارٍ تحميل الكتالوج...</div>
+</main>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="superqi.js"></script>
+<script>
+  var ALL = [];
+  var activeOccasion = "الكل";
+  var searchTerm = "";
+
+  var grid = document.getElementById("grid");
+  var filters = document.getElementById("filters");
+  var searchInput = document.getElementById("search");
+
+  function setState(text, isError) {
+    grid.innerHTML =
+      '<div class="state' + (isError ? " error" : "") + '">' + text + "</div>";
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function cardHtml(p) {
+    var name = escapeHtml(p.name_ar || p.name_en || "");
+    var featured = p.featured
+      ? '<span class="badge">مميزة</span>'
+      : "";
+    return (
+      '<a class="card" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
+        featured +
+        '<div class="thumb">' +
+          '<img src="' + imageUrl(p.image_url) + '" alt="' + name + '" loading="lazy" ' +
+          "onerror=\"this.onerror=null;this.src=PLACEHOLDER_IMG;\">" +
+        "</div>" +
+        '<div class="card-body">' +
+          '<div class="name">' + name + "</div>" +
+          '<div class="price">' + formatPrice(p.price) + ' <span class="cur">د.ع</span></div>' +
+        "</div>" +
+      "</a>"
+    );
+  }
+
+  function render() {
+    var list = ALL.filter(function (p) {
+      var okOccasion =
+        activeOccasion === "الكل" || p.occasion === activeOccasion;
+      var hay =
+        (p.name_ar || "") + " " + (p.name_en || "") + " " +
+        (p.occasion || "") + " " + (p.category || "");
+      var okSearch =
+        !searchTerm || hay.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
+      return okOccasion && okSearch;
+    });
+
+    if (!list.length) {
+      setState("لا توجد نتائج مطابقة.");
+      return;
+    }
+    grid.innerHTML = list.map(cardHtml).join("");
+  }
+
+  function buildFilters() {
+    var set = {};
+    ALL.forEach(function (p) {
+      if (p.occasion) set[p.occasion] = true;
+    });
+    var occasions = ["الكل"].concat(Object.keys(set));
+    filters.innerHTML = occasions
+      .map(function (o) {
+        var active = o === activeOccasion ? " active" : "";
+        return '<button class="chip' + active + '" data-occasion="' +
+          escapeHtml(o) + '">' + escapeHtml(o) + "</button>";
+      })
+      .join("");
+  }
+
+  filters.addEventListener("click", function (e) {
+    var btn = e.target.closest(".chip");
+    if (!btn) return;
+    activeOccasion = btn.getAttribute("data-occasion");
+    buildFilters();
+    render();
+  });
+
+  searchInput.addEventListener("input", function () {
+    searchTerm = searchInput.value.trim();
+    render();
+  });
+
+  (async function load() {
+    try {
+      var query =
+        "select=id,code,name_ar,name_en,price,category,occasion,note,featured,image_url" +
+        "&order=featured.desc,code.asc";
+      ALL = await fetchCatalog(query);
+      if (!ALL.length) {
+        setState("لا توجد منتجات متاحة حالياً.");
+        return;
+      }
+      buildFilters();
+      render();
+    } catch (err) {
+      console.error(err);
+      setState("تعذّر تحميل الكتالوج. تحقق من الاتصال وحاول مرة أخرى.", true);
+    }
+  })();
+</script>
+</body>
+</html>
