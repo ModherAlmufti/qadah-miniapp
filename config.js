@@ -6,7 +6,7 @@ const SUPABASE_URL = "https://tsqkqoibfxachknfmzjj.supabase.co";
 // Publishable (anon) key. Same key used in the store and the dashboard.
 // Paste it here. It is safe in the frontend because RLS guards the tables.
 // Rotate it before launch and update it in every file.
-const SUPABASE_KEY = "PASTE_ANON_KEY_HERE";
+const SUPABASE_KEY = "sb_publishable_JyCAQnMnltVq9nESIZjNew_St2FI6Ch";
 
 const REST_URL = SUPABASE_URL + "/rest/v1";
 const STORAGE_URL = SUPABASE_URL + "/storage/v1/object/public/product-images/";
