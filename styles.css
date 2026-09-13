@@ -53,7 +53,7 @@ body {
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-ar {
-  font-family: "Amiri", serif;
+  font-family: "Tajawal", sans-serif;
   font-size: 22px;
   font-weight: 700;
   color: var(--cream-page);
@@ -157,7 +157,7 @@ body {
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .card-body { padding: 10px 12px 14px; }
 .name {
-  font-family: "Amiri", serif;
+  font-family: "Tajawal", sans-serif;
   font-size: 17px;
   font-weight: 700;
   line-height: 1.4;
@@ -202,7 +202,7 @@ body {
   display: block;
 }
 .p-name-ar {
-  font-family: "Amiri", serif;
+  font-family: "Tajawal", sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: var(--navy);
@@ -264,7 +264,7 @@ body {
 .cart-line { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .line-img { width: 68px; height: 68px; border-radius: 12px; object-fit: cover; background: var(--cream); flex: 0 0 auto; }
 .line-body { flex: 1 1 auto; min-width: 0; }
-.line-name { font-family: "Amiri", serif; font-size: 16px; font-weight: 700; color: var(--navy); line-height: 1.4; }
+.line-name { font-family: "Tajawal", sans-serif; font-size: 16px; font-weight: 700; color: var(--navy); line-height: 1.4; }
 .line-unit { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .line-controls { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
 .mini-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); }
@@ -312,7 +312,7 @@ body {
 }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--card); width: 100%; max-width: 460px; border-radius: 16px; padding: 20px 18px 22px; }
-.modal h2 { font-family: "Amiri", serif; color: var(--navy); font-size: 20px; margin: 0 0 4px; }
+.modal h2 { font-family: "Tajawal", sans-serif; color: var(--navy); font-size: 20px; margin: 0 0 4px; }
 .modal .modal-sub { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 .form-section { font-size: 14px; font-weight: 700; color: var(--navy); margin: 16px 0 8px; }
 .field { margin-bottom: 12px; }
@@ -373,7 +373,7 @@ body {
   font-size: 34px;
   margin: 0 auto 16px;
 }
-.success h2 { font-family: "Amiri", serif; color: var(--navy); font-size: 22px; margin: 0 0 8px; }
+.success h2 { font-family: "Tajawal", sans-serif; color: var(--navy); font-size: 22px; margin: 0 0 8px; }
 .success .code { font-size: 18px; font-weight: 700; color: var(--ink); margin: 8px 0; }
 .success .total { color: var(--muted); font-size: 15px; }
 .success a {
@@ -386,3 +386,59 @@ body {
   text-decoration: none;
   font-weight: 700;
 }
+
+/* ---- Cream logo card on the navy header (like qadah.co) ---- */
+.brand-icon { background: var(--cream); }
+
+/* ---- Modern bold headings (match qadah.co) ---- */
+.brand-ar, .name, .p-name-ar, .line-name, .hero-title, .modal h2, .success h2 { font-weight: 800; }
+.brand-ar { letter-spacing: 0; }
+
+/* ---- Hero section (cream), inspired by qadah.co ---- */
+.hero { padding: 16px 16px 4px; }
+.hero-img {
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--cream);
+  box-shadow: 0 14px 30px rgba(1, 24, 58, 0.10);
+}
+.hero-img img { width: 100%; display: block; aspect-ratio: 1 / 1; object-fit: cover; }
+.hero-body { text-align: center; padding: 18px 6px 10px; }
+.hero-tag {
+  display: inline-block;
+  background: var(--rose-soft);
+  color: var(--rose-strong);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+.hero-title {
+  font-family: "Tajawal", sans-serif;
+  font-weight: 800;
+  font-size: 32px;
+  color: var(--navy);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+.hero-sub { color: var(--ink); font-size: 15px; line-height: 1.7; margin: 0 auto 6px; max-width: 300px; }
+.hero-en { display: block; color: var(--rose); font-size: 11px; letter-spacing: 3px; margin-bottom: 16px; }
+.hero-actions { display: flex; gap: 10px; justify-content: center; }
+.hero-btn {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 14px;
+  background: var(--navy);
+  color: var(--cream-page);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hero-btn:active { background: var(--navy-dark); }
+.hero-btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--line); }
+
+/* Softer catalog rhythm */
+.grid { gap: 14px; }
+.card { border-radius: 18px; box-shadow: 0 10px 24px rgba(1, 24, 58, 0.06); }
