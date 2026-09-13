@@ -52,7 +52,7 @@ body {
   display: block;
   object-fit: cover;
 }
-.brand-text { display: flex; flex-direction: column; line-height: 1.05; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-ar {
   font-family: "Tajawal", sans-serif;
   font-size: 22px;
@@ -63,7 +63,7 @@ body {
   font-size: 10px;
   letter-spacing: 3px;
   color: var(--rose-strong);
-  margin-top: 1px;
+  margin-top: 4px;
 }
 
 .cart-link {
