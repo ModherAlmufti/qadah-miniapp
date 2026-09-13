@@ -30,7 +30,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Header */
+/* Header (cream, like the qadah.co logo bar) */
 .app-header {
   position: sticky;
   top: 0;
@@ -39,8 +39,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--navy);
-  color: var(--cream-page);
+  background: var(--cream);
+  color: var(--navy);
+  border-bottom: 1px solid var(--line);
 }
 .brand-link { text-decoration: none; color: inherit; }
 .brand { display: flex; align-items: center; gap: 10px; }
@@ -56,12 +57,12 @@ body {
   font-family: "Tajawal", sans-serif;
   font-size: 22px;
   font-weight: 700;
-  color: var(--cream-page);
+  color: var(--navy);
 }
 .brand-en {
   font-size: 10px;
   letter-spacing: 3px;
-  color: var(--rose);
+  color: var(--rose-strong);
   margin-top: 1px;
 }
 
@@ -69,7 +70,7 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
-  color: var(--cream-page);
+  color: var(--navy);
   text-decoration: none;
 }
 .cart-link svg { width: 26px; height: 26px; }
@@ -81,18 +82,18 @@ body {
   height: 18px;
   padding: 0 4px;
   border-radius: 9px;
-  background: var(--rose);
-  color: var(--navy);
+  background: var(--navy);
+  color: var(--cream-page);
   font-size: 12px;
   font-weight: 700;
   line-height: 18px;
   text-align: center;
 }
 
-/* Promo strip */
+/* Top delivery bar (navy, above the header) */
 .promo {
-  background: var(--rose-soft);
-  color: var(--navy);
+  background: var(--navy);
+  color: var(--cream-page);
   text-align: center;
   font-size: 12px;
   font-weight: 500;
