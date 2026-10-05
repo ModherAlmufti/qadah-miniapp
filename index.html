@@ -6,7 +6,7 @@
 <title>قدّاح</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <!-- SuperQi web-view JSAPI bridge. Injected only inside the app container, so no 404 in a normal browser. -->
 <script>
@@ -20,155 +20,320 @@
   })();
 </script>
 </head>
-<body>
+<body class="has-bnav" id="top">
 <div class="promo">توصيل مجاني للطلبات فوق ١٥٠٬٠٠٠ د.ع · بغداد في نفس اليوم</div>
 <header class="app-header">
-  <div class="brand">
-    <img class="brand-icon" src="icon-cream.png" alt="قدّاح QADAH">
-    <span class="brand-text"><span class="brand-ar">قدّاح</span><span class="brand-en">QADAH</span></span>
-  </div>
-  <a class="cart-link" href="cart.html" aria-label="السلة">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-      <path d="M3 6h18"/>
-      <path d="M16 10a4 4 0 0 1-8 0"/>
-    </svg>
-    <span class="cart-badge" data-cart-count>0</span>
+  <a class="brand-link" href="index.html">
+    <div class="brand">
+      <img class="brand-icon" src="icon-cream.png" alt="">
+      <span class="brand-text"><span class="brand-ar">قدّاح</span><span class="brand-en">QADAH</span></span>
+    </div>
   </a>
+  <div class="head-actions">
+    <button class="icon-btn" type="button" aria-label="بحث" onclick="goSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+    </button>
+    <a class="icon-btn" href="cart.html" aria-label="السلة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+      <span class="cart-badge" data-cart-count style="display:none">0</span>
+    </a>
+  </div>
 </header>
 
-<section class="hero">
-  <div class="hero-img"><img src="c1-hero.webp" alt="باقة قدّاح الفاخرة" loading="eager"></div>
-  <div class="hero-body">
-    <span class="hero-tag">متجر الورد الفاخر في بغداد</span>
-    <h1 class="hero-title">نُهدي المشاعر</h1>
-    <p class="hero-sub">باقات ورد تعبّر عن أجمل المشاعر وتصل من القلب إلى القلب.</p>
-    <span class="hero-en">WE DELIVER EMOTIONS</span>
-    <div class="hero-actions">
-      <button class="hero-btn" type="button" onclick="document.getElementById('grid').scrollIntoView({behavior:'smooth'})">تسوّق الآن</button>
-      <button class="hero-btn ghost" type="button" onclick="document.getElementById('search').focus()">استكشف الباقات</button>
+<!-- Hero -->
+<section class="hx">
+  <div class="hx-media ph">
+    <img src="c1-hero.webp" alt="باقة من قدّاح" onerror="this.remove()">
+    <span class="hx-pill">توصيل في نفس اليوم ببغداد</span>
+  </div>
+  <div class="hx-body">
+    <div class="latin">WE DELIVER EMOTIONS</div>
+    <h1 class="hx-title">هديتك تبدأ من الشعور</h1>
+    <p class="hx-sub">ورد فاخر وهدايا مختارة بعناية، تصل لمن تحب في بغداد بنفس اليوم، مع بطاقة بكلماتك أنت.</p>
+    <div class="hx-cta">
+      <a class="hx-btn" href="#occasions">أرسل هدية
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></a>
+      <a class="hx-btn ghost" href="#finder">ساعدني أختار</a>
     </div>
   </div>
 </section>
 
-<div class="search-wrap">
-  <input id="search" class="search" type="search" placeholder="ابحث عن باقة أو مناسبة" autocomplete="off">
-</div>
+<!-- Trust -->
+<section class="tgrid" aria-label="لماذا قدّاح">
+  <div class="titem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+    <b>توصيل بنفس اليوم</b><span>داخل بغداد</span>
+  </div>
+  <div class="titem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>
+    <b>تنسيق عند الطلب</b><span>يُجهّز خصيصاً لطلبك</span>
+  </div>
+  <div class="titem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 6h16v12H4zM8 10h8M8 14h5"/></svg>
+    <b>بطاقة بكلماتك</b><span>رسالة شخصية مع كل هدية</span>
+  </div>
+  <div class="titem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>
+    <b>دعم عبر واتساب</b><span>قبل الطلب وبعده</span>
+  </div>
+</section>
 
-<div id="filters" class="filters"></div>
+<!-- What do you want to say? -->
+<section class="sec" id="occasions" hidden>
+  <div class="sec-head">
+    <h2 class="sec-title">ماذا تريد أن تقول؟</h2>
+    <p class="sec-sub">اختر الشعور، ونعرض لك الهدايا المناسبة.</p>
+  </div>
+  <div class="hchips" id="occChips" role="group" aria-label="المناسبات"></div>
+  <div class="hchips small" id="recChips" role="group" aria-label="لمن الهدية" hidden></div>
+</section>
 
-<main id="grid" class="grid" aria-live="polite">
-  <div class="state">جارٍ تحميل الكتالوج...</div>
-</main>
+<!-- Gifts -->
+<section class="sec" id="gifts">
+  <div class="gbar">
+    <div><h3 id="gridTitle">كل الهدايا</h3><div class="count" id="count" aria-live="polite"></div></div>
+    <button class="clear" type="button" id="clearBtn" hidden onclick="clearFilters()">عرض الكل</button>
+  </div>
+  <label class="gsearch"><span class="brand-en" style="position:absolute;width:1px;height:1px;overflow:hidden">ابحث</span>
+    <input id="search" type="search" placeholder="ابحث باسم الهدية" autocomplete="off">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+  </label>
+  <div class="ggrid" id="grid"></div>
+</section>
+
+<!-- Gift finder -->
+<section class="finder" id="finder" hidden>
+  <div class="latin">GIFT FINDER</div>
+  <h2>محتار ماذا تهدي؟</h2>
+  <p class="lead">ثلاثة أسئلة سريعة، ونقترح لك الأنسب.</p>
+  <div id="finderBody" aria-live="polite"></div>
+</section>
+
+<!-- Help -->
+<section class="helpbox">
+  <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></div>
+  <div><b>نحن هنا لمساعدتك</b><span>لاختيار الهدية أو متابعة طلبك، راسلنا على واتساب: <span class="num">0775 454 9417</span></span></div>
+</section>
+
+<div class="foot-note"><b>قدّاح</b>Al Hanoot for General Trading</div>
+
+<nav class="bnav" aria-label="التنقل">
+  <a href="#top" class="on">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>الرئيسية</a>
+  <a href="#occasions">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></svg>المناسبات</a>
+  <button type="button" onclick="showWishlist()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg><span id="wishNav">المفضلة</span></button>
+  <a href="cart.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>السلة
+    <span class="cart-badge" data-cart-count style="display:none">0</span></a>
+</nav>
+
+<div class="qtoast" id="qtoast" role="status"></div>
 
 <script src="config.js"></script>
 <script src="cart.js"></script>
 <script src="superqi.js"></script>
+<script src="ui.js"></script>
 <script>
-  var ALL = [];
-  var activeOccasion = "الكل";
-  var searchTerm = "";
+  var BUDGETS = [
+    { id: "low",  label: "أقل من ٧٥ ألف",     test: function (p) { return p.price < 75000; } },
+    { id: "mid",  label: "من ٧٥ إلى ١٥٠ ألف", test: function (p) { return p.price >= 75000 && p.price <= 150000; } },
+    { id: "high", label: "أكثر من ١٥٠ ألف",   test: function (p) { return p.price > 150000; } },
+    { id: "any",  label: "لا يهم",            test: function () { return true; } }
+  ];
+  var S = { all: [], occasions: [], recipients: [], occ: "", rec: "", q: "", wishOnly: false,
+            f: { step: 0, rec: null, occ: null, budget: null } };
+  var $ = function (id) { return document.getElementById(id); };
+  function nameOf(list, id) { var x = list.find(function (t) { return t.id === id; }); return x ? x.name_ar : ""; }
 
-  var grid = document.getElementById("grid");
-  var filters = document.getElementById("filters");
-  var searchInput = document.getElementById("search");
-
-  function setState(text, isError) {
-    grid.innerHTML =
-      '<div class="state' + (isError ? " error" : "") + '">' + text + "</div>";
+  // ---------- chips ----------
+  function renderChips() {
+    var sec = $("occasions");
+    if (!S.occasions.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    $("occChips").innerHTML = [{ id: "", name_ar: "الكل", icon: "all" }].concat(S.occasions).map(function (o) {
+      return '<button type="button" class="hchip" data-occ="' + esc(o.id) + '" aria-pressed="' + (!S.wishOnly && S.occ === o.id) + '">' + icon(o.icon) + esc(o.name_ar) + "</button>";
+    }).join("");
+    var rec = $("recChips");
+    if (!S.recipients.length) { rec.hidden = true; return; }
+    rec.hidden = false;
+    rec.innerHTML = '<span class="hchips-label">لمن؟</span>' + S.recipients.map(function (r) {
+      return '<button type="button" class="hchip" data-rec="' + esc(r.id) + '" aria-pressed="' + (!S.wishOnly && S.rec === r.id) + '">' + icon(r.icon) + esc(r.name_ar) + "</button>";
+    }).join("");
   }
+  $("occChips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-occ]"); if (!b) return;
+    S.occ = b.getAttribute("data-occ"); S.wishOnly = false; renderChips(); renderGrid();
+  });
+  $("recChips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-rec]"); if (!b) return;
+    var v = b.getAttribute("data-rec"); S.rec = S.rec === v ? "" : v; S.wishOnly = false; renderChips(); renderGrid();
+  });
 
-  function escapeHtml(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function cardHtml(p) {
-    var name = escapeHtml(p.name_ar || p.name_en || "");
-    var featured = p.featured
-      ? '<span class="badge">مميزة</span>'
-      : "";
-    return (
-      '<a class="card" href="product.html?id=' + encodeURIComponent(p.id) + '">' +
-        featured +
-        '<div class="thumb">' +
-          '<img src="' + imageUrl(p.image_url) + '" alt="' + name + '" loading="lazy" ' +
-          "onerror=\"this.onerror=null;this.src=PLACEHOLDER_IMG;\">" +
-        "</div>" +
-        '<div class="card-body">' +
-          '<div class="name">' + name + "</div>" +
-          '<div class="price">' + formatPrice(p.price) + ' <span class="cur">د.ع</span></div>' +
-        "</div>" +
-      "</a>"
-    );
-  }
-
-  function render() {
-    var list = ALL.filter(function (p) {
-      var okOccasion =
-        activeOccasion === "الكل" || p.occasion === activeOccasion;
-      var hay =
-        (p.name_ar || "") + " " + (p.name_en || "") + " " +
-        (p.occasion || "") + " " + (p.category || "");
-      var okSearch =
-        !searchTerm || hay.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1;
-      return okOccasion && okSearch;
+  // ---------- grid ----------
+  function visible() {
+    var q = S.q.toLowerCase(), wish = Wish.all();
+    return S.all.filter(function (p) {
+      if (S.wishOnly && wish.indexOf(p.id) === -1) return false;
+      if (S.occ && (p.occasion_ids || []).indexOf(S.occ) === -1) return false;
+      if (S.rec && (p.recipient_ids || []).indexOf(S.rec) === -1) return false;
+      if (q && ((p.name_ar || "") + " " + (p.name_en || "") + " " + (p.code || "")).toLowerCase().indexOf(q) === -1) return false;
+      return true;
     });
-
+  }
+  function title() {
+    if (S.wishOnly) return "المفضلة";
+    var o = nameOf(S.occasions, S.occ), r = nameOf(S.recipients, S.rec);
+    return o && r ? o + " · " + r : (o || r || "كل الهدايا");
+  }
+  function card(p) {
+    var src = photo(p), wished = Wish.has(p.id);
+    var occ = (p.occasion_ids || []).map(function (id) { return nameOf(S.occasions, id); }).filter(Boolean).slice(0, 1);
+    var badge = BADGES[p.badge]
+      ? '<span class="gbadge' + (p.badge === "premium" ? " premium" : "") + '">' + BADGES[p.badge] + "</span>"
+      : (p.featured ? '<span class="gbadge">مختارة لك</span>' : "");
+    var href = "product.html?id=" + encodeURIComponent(p.id);
+    return '<article class="gcard">' +
+      '<a class="gcard-media ph" href="' + href + '" tabindex="-1" aria-hidden="true">' +
+        (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</a>" +
+      badge +
+      '<button type="button" class="gwish" data-wish="' + esc(p.id) + '" aria-pressed="' + wished + '" aria-label="' + (wished ? "إزالة من المفضلة" : "أضف إلى المفضلة") + '">' +
+        '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg></span></button>' +
+      '<div class="gcard-body">' +
+        '<div class="gmeta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"/></svg>يصل اليوم' + (occ.length ? " · " + esc(occ[0]) : "") + "</div>" +
+        '<a class="gname" href="' + href + '">' + esc(p.name_ar || p.name_en || "") + "</a>" +
+        '<div class="gfoot"><span class="gprice">' + formatPrice(p.price) + " <small>د.ع</small></span>" +
+          '<button type="button" class="gadd" data-add="' + esc(p.id) + '" aria-label="أضف ' + esc(p.name_ar || "") + ' إلى السلة">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>' +
+      "</div></article>";
+  }
+  function renderGrid() {
+    var list = visible(), grid = $("grid");
+    grid.classList.remove("skel");
+    $("gridTitle").textContent = title();
+    $("count").textContent = countWord(list.length);
+    $("clearBtn").hidden = !(S.occ || S.rec || S.q || S.wishOnly);
     if (!list.length) {
-      setState("لا توجد نتائج مطابقة.");
+      grid.innerHTML = S.wishOnly
+        ? '<div class="gstate"><b>لا توجد هدايا في المفضلة بعد</b>اضغط على القلب في أي هدية لتحفظها هنا.</div>'
+        : '<div class="gstate"><b>لا توجد هدايا مطابقة</b>جرّب مناسبة أخرى أو امسح البحث.<br><button type="button" onclick="clearFilters()">عرض كل الهدايا</button></div>';
       return;
     }
-    grid.innerHTML = list.map(cardHtml).join("");
+    grid.innerHTML = list.map(card).join("");
   }
-
-  function buildFilters() {
-    var set = {};
-    ALL.forEach(function (p) {
-      if (p.occasion) set[p.occasion] = true;
-    });
-    var occasions = ["الكل"].concat(Object.keys(set));
-    filters.innerHTML = occasions
-      .map(function (o) {
-        var active = o === activeOccasion ? " active" : "";
-        return '<button class="chip' + active + '" data-occasion="' +
-          escapeHtml(o) + '">' + escapeHtml(o) + "</button>";
-      })
-      .join("");
+  $("grid").addEventListener("click", function (e) {
+    var a = e.target.closest("[data-add]");
+    if (a) {
+      var id = a.getAttribute("data-add"), p = S.all.find(function (x) { return x.id === id; });
+      Cart.add(id, 1);
+      toast("أُضيفت «" + esc(p ? p.name_ar : "") + '» إلى السلة <a href="cart.html">إتمام الطلب</a>');
+      return;
+    }
+    var w = e.target.closest("[data-wish]");
+    if (w) {
+      var on = Wish.toggle(w.getAttribute("data-wish"));
+      w.setAttribute("aria-pressed", on);
+      w.setAttribute("aria-label", on ? "إزالة من المفضلة" : "أضف إلى المفضلة");
+      updateWishNav();
+      if (S.wishOnly) renderGrid();
+    }
+  });
+  function updateWishNav() {
+    var n = Wish.all().filter(function (id) { return S.all.some(function (p) { return p.id === id; }); }).length;
+    $("wishNav").textContent = n ? "المفضلة (" + n + ")" : "المفضلة";
   }
+  function showWishlist() {
+    S.wishOnly = true; S.occ = ""; S.rec = ""; S.q = ""; $("search").value = "";
+    renderChips(); renderGrid(); $("gifts").scrollIntoView({ behavior: "smooth" });
+  }
+  function clearFilters() {
+    S.occ = ""; S.rec = ""; S.q = ""; S.wishOnly = false; $("search").value = "";
+    renderChips(); renderGrid();
+  }
+  function goSearch() { $("gifts").scrollIntoView({ behavior: "smooth" }); setTimeout(function () { $("search").focus(); }, 300); }
+  $("search").addEventListener("input", function () { S.q = this.value.trim(); S.wishOnly = false; renderGrid(); });
 
-  filters.addEventListener("click", function (e) {
-    var btn = e.target.closest(".chip");
-    if (!btn) return;
-    activeOccasion = btn.getAttribute("data-occasion");
-    buildFilters();
-    render();
-  });
-
-  searchInput.addEventListener("input", function () {
-    searchTerm = searchInput.value.trim();
-    render();
-  });
-
-  (async function load() {
-    try {
-      var query =
-        "select=id,code,name_ar,name_en,price,category,occasion,note,featured,image_url" +
-        "&order=featured.desc,code.asc";
-      ALL = await fetchCatalog(query);
-      if (!ALL.length) {
-        setState("لا توجد منتجات متاحة حالياً.");
-        return;
+  // ---------- gift finder ----------
+  function steps() {
+    var out = [];
+    if (S.recipients.length) out.push({ key: "rec", q: "لمن الهدية؟", opts: S.recipients.map(function (r) { return { v: r.id, l: r.name_ar }; }).concat([{ v: "", l: "لأي شخص" }]) });
+    if (S.occasions.length) out.push({ key: "occ", q: "ما المناسبة؟", opts: S.occasions.map(function (o) { return { v: o.id, l: o.name_ar }; }) });
+    out.push({ key: "budget", q: "كم ميزانيتك تقريباً؟", opts: BUDGETS.map(function (b) { return { v: b.id, l: b.label }; }) });
+    return out;
+  }
+  function matches() {
+    var f = S.f, b = BUDGETS.find(function (x) { return x.id === f.budget; }) || BUDGETS[3];
+    var base = S.all.filter(b.test);
+    var hasO = function (p) { return f.occ && (p.occasion_ids || []).indexOf(f.occ) !== -1; };
+    var hasR = function (p) { return f.rec && (p.recipient_ids || []).indexOf(f.rec) !== -1; };
+    var list = base.filter(function (p) { return (!f.occ || hasO(p)) && (!f.rec || hasR(p)); }), exact = true;
+    if (!list.length) { exact = false; list = base.filter(function (p) { return hasO(p) || hasR(p); }).sort(function (a, c) { return (hasO(c) * 2 + hasR(c)) - (hasO(a) * 2 + hasR(a)); }); }
+    if (!list.length) { exact = false; list = base; }
+    return { list: list.slice(0, 3), exact: exact };
+  }
+  function renderFinder() {
+    $("finder").hidden = S.all.length < 2;
+    var st = steps(), f = S.f, body = $("finderBody");
+    var bars = '<div class="fbars">' + st.map(function (_, i) { return '<i class="' + (i <= f.step ? "on" : "") + '"></i>'; }).join("") + "</div>";
+    if (f.step < st.length) {
+      var s = st[f.step];
+      body.innerHTML = bars + '<div class="fstep">السؤال ' + (f.step + 1) + " من " + st.length + '</div><div class="fq">' + s.q + "</div>" +
+        '<div class="fopts">' + s.opts.map(function (o) { return '<button type="button" class="fopt" data-v="' + esc(o.v) + '">' + esc(o.l) + "</button>"; }).join("") + "</div>" +
+        (f.step > 0 ? '<button type="button" class="fback" data-back="1">رجوع للسؤال السابق</button>' : "");
+      body.onclick = function (e) {
+        var o = e.target.closest(".fopt");
+        if (o) { f[s.key] = o.getAttribute("data-v") || null; f.step++; renderFinder(); return; }
+        if (e.target.closest("[data-back]")) { f.step--; renderFinder(); }
+      };
+      return;
+    }
+    var m = matches();
+    var summary = [nameOf(S.recipients, f.rec), nameOf(S.occasions, f.occ), (BUDGETS.find(function (b) { return b.id === f.budget; }) || {}).label].filter(Boolean).map(esc).join(" · ");
+    body.innerHTML = bars + '<div class="fstep">' + summary + '</div><div class="fq">' + (m.exact ? "اخترنا لك " + countWord(m.list.length) : "لم نجد تطابقاً كاملاً، هذه أقرب الخيارات") + "</div>" +
+      m.list.map(function (p) {
+        return '<a class="fmatch" href="product.html?id=' + encodeURIComponent(p.id) + '"><span class="fmatch-img ph">' +
+          (photo(p) ? '<img src="' + esc(photo(p)) + '" alt="" loading="lazy" onerror="this.remove()">' : "") +
+          "</span><b>" + esc(p.name_ar) + "</b><span>" + formatPrice(p.price) + " د.ع</span></a>";
+      }).join("") +
+      '<div class="factions">' + (m.exact && (f.occ || f.rec) ? '<button type="button" class="fapply" data-apply="1">اعرض كل المطابق</button>' : "") +
+      '<button type="button" class="freset" data-reset="1">من جديد</button></div>';
+    body.onclick = function (e) {
+      if (e.target.closest("[data-apply]")) {
+        S.occ = f.occ || ""; S.rec = f.rec || ""; S.wishOnly = false; S.q = ""; $("search").value = "";
+        renderChips(); renderGrid(); $("gifts").scrollIntoView({ behavior: "smooth" });
+      } else if (e.target.closest("[data-reset]")) {
+        S.f = { step: 0, rec: null, occ: null, budget: null }; renderFinder();
       }
-      buildFilters();
-      render();
+    };
+  }
+
+  // ---------- load ----------
+  (async function load() {
+    var grid = $("grid");
+    grid.classList.add("skel");
+    grid.innerHTML = Array.from({ length: 4 }).map(function () {
+      return '<div class="gcard"><div class="gcard-media"></div><div class="gcard-body"><div class="gmeta">تحميل</div><div class="gname">تحميل اسم الهدية</div><div class="gprice">00000</div></div></div>';
+    }).join("");
+    try {
+      S.all = await fetchCatalog("select=id,code,name_ar,name_en,price,featured,image_url,occasion_ids,recipient_ids,badge&order=featured.desc,code.asc");
     } catch (err) {
       console.error(err);
-      setState("تعذّر تحميل الكتالوج. تحقق من الاتصال وحاول مرة أخرى.", true);
+      grid.classList.remove("skel");
+      grid.innerHTML = '<div class="gstate"><b>تعذّر تحميل الهدايا</b>تحقق من الاتصال وحاول مرة أخرى.<br><button type="button" onclick="location.reload()">إعادة المحاولة</button></div>';
+      return;
     }
+    if (!S.all.length) { grid.classList.remove("skel"); grid.innerHTML = '<div class="gstate"><b>لا توجد هدايا حالياً</b>نجهّز تشكيلتنا، عد قريباً.</div>'; return; }
+    var t = await loadTags();
+    // Only show options that actually have products, so a tap never lands on an empty list.
+    S.occasions = t.occasions.filter(function (o) { return S.all.some(function (p) { return (p.occasion_ids || []).indexOf(o.id) !== -1; }); });
+    S.recipients = t.recipients.filter(function (r) { return S.all.some(function (p) { return (p.recipient_ids || []).indexOf(r.id) !== -1; }); });
+    var h = new URLSearchParams(location.hash.replace(/^#/, ""));
+    if (h.get("occ") && S.occasions.some(function (o) { return o.id === h.get("occ"); })) S.occ = h.get("occ");
+    if (h.get("rec") && S.recipients.some(function (r) { return r.id === h.get("rec"); })) S.rec = h.get("rec");
+    if (location.hash === "#wish") S.wishOnly = true;
+    renderChips(); renderGrid(); renderFinder(); updateWishNav();
+    if (S.occ || S.rec || S.wishOnly) $("gifts").scrollIntoView();
   })();
 </script>
 </body>
