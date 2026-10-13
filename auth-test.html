@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>اختبار الدخول · قدّاح</title>
+<!-- Official SuperQi bridge for H5 mini apps (per superqi-dev-docs JSAPI page). -->
+<script src="https://cdn.marmot-cloud.com/npm/hylid-bridge/2.10.0/index.js"></script>
+<style>
+  body { margin: 0; padding: 20px 16px 40px; font-family: Tahoma, sans-serif; background: #fbf6ee; color: #24303c; max-width: 500px; margin-inline: auto; }
+  h1 { font-size: 20px; color: #01183a; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: #6b645e; font-size: 13px; }
+  button { width: 100%; min-height: 52px; border: none; border-radius: 14px; background: #01183a; color: #fbf6ee; font-size: 16px; font-weight: 700; margin-bottom: 10px; cursor: pointer; }
+  button.ghost { background: transparent; color: #01183a; border: 1.5px solid #01183a; }
+  .box { background: #fffdfa; border: 1px solid #ece2d4; border-radius: 14px; padding: 12px 14px; margin-top: 12px; font-size: 13px; line-height: 1.8; direction: ltr; text-align: left; word-break: break-all; white-space: pre-wrap; }
+  .ok { color: #2e7d5b; font-weight: 700; }
+  .bad { color: #b23a3a; font-weight: 700; }
+  a { color: #01183a; }
+</style>
+</head>
+<body>
+  <h1>اختبار تسجيل الدخول (SuperQi)</h1>
+  <p class="sub">صفحة اختبار للمطوّر فقط. لا تُرسل أي بيانات إلى أي خادم.</p>
+
+  <button type="button" id="runBtn">اختبار my.getAuthCode (auth_base)</button>
+  <button type="button" class="ghost" id="copyBtn">نسخ النتيجة</button>
+  <a href="index.html">العودة للتطبيق</a>
+
+  <div class="box" id="env"></div>
+  <div class="box" id="out">اضغط الزر لبدء الاختبار.</div>
+
+<script>
+  var out = document.getElementById("out");
+  var log = [];
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function show(obj) { try { return JSON.stringify(obj); } catch (e) { return String(obj); } }
+
+  // Environment snapshot (no secrets here)
+  document.getElementById("env").textContent =
+    "time: " + new Date().toISOString() + "\n" +
+    "url: " + location.href + "\n" +
+    "userAgent: " + navigator.userAgent + "\n" +
+    "typeof my: " + (typeof my) + "\n" +
+    "typeof my.getAuthCode: " + (typeof my !== "undefined" && my ? typeof my.getAuthCode : "n/a") + "\n" +
+    "typeof AlipayJSBridge: " + (typeof AlipayJSBridge);
+
+  document.getElementById("runBtn").addEventListener("click", function () {
+    log = [];
+    if (typeof my === "undefined" || !my || typeof my.getAuthCode !== "function") {
+      log.push('<span class="bad">my.getAuthCode غير متاح. افتح الصفحة من داخل SuperQi.</span>');
+      out.innerHTML = log.join("\n");
+      return;
+    }
+    log.push("calling my.getAuthCode({ scopes: ['auth_base'] }) ...");
+    out.innerHTML = log.join("\n");
+    var started = Date.now();
+    my.getAuthCode({
+      scopes: ["auth_base"],
+      success: function (res) {
+        var code = res && res.authCode ? String(res.authCode) : "";
+        log.push('<span class="ok">SUCCESS</span> after ' + (Date.now() - started) + " ms");
+        // The code is single-use and short-lived; show only its start and length.
+        log.push("authCode: " + esc(code.slice(0, 8)) + "... (length " + code.length + ")");
+        log.push("authSuccessScopes: " + esc(show(res.authSuccessScopes || [])));
+        out.innerHTML = log.join("\n");
+      },
+      fail: function (err) {
+        log.push('<span class="bad">FAIL</span> after ' + (Date.now() - started) + " ms");
+        log.push("error: " + esc(show(err)));
+        out.innerHTML = log.join("\n");
+      }
+    });
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var text = document.getElementById("env").textContent + "\n---\n" + out.textContent;
+    if (typeof my !== "undefined" && my && my.setClipboard) {
+      my.setClipboard({ text: text, success: function () { my.alert && my.alert({ content: "تم النسخ" }); } });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { alert("تم النسخ"); });
+    }
+  });
+</script>
+</body>
+</html>
