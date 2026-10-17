@@ -8,15 +8,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<!-- SuperQi web-view JSAPI bridge. Injected only inside the app container, so no 404 in a normal browser. -->
+<!-- SuperQi H5+ JSAPI bridge: the official hylid-bridge (superqi-dev-docs, JSAPI page).
+     Loaded only inside the SuperQi container (user-agent check), because in a normal
+     browser hylid-bridge also defines "my", so "typeof my" alone cannot tell us we are in SuperQi.
+     QADAH_BRIDGE resolves to true once "my" is ready, false outside the app or on a load error. -->
 <script>
   (function () {
     var ua = navigator.userAgent || "";
-    if (/AlipayClient|mPaaSClient|MiniProgram|SuperQi|QiNEO/i.test(ua)) {
+    var inApp = /AlipayClient|mPaaSClient|MiniProgram|SuperQi|QiNEO|Ariver|Griver|AppContainer|iapwallet/i.test(ua);
+    window.QADAH_IN_SUPERQI = inApp;
+    window.QADAH_BRIDGE = new Promise(function (resolve) {
+      if (!inApp) { resolve(false); return; }
+      var done = false;
+      function finish(v) { if (!done) { done = true; resolve(v); } }
       var s = document.createElement("script");
-      s.src = "https://appx/web-view.min.js";
+      s.src = "https://cdn.marmot-cloud.com/npm/hylid-bridge/2.10.0/index.js";
+      s.onload = function () { finish(typeof my !== "undefined" && !!my); };
+      s.onerror = function () { finish(false); };
+      setTimeout(function () { finish(typeof my !== "undefined" && !!my); }, 8000);
       document.head.appendChild(s);
-    }
+    });
   })();
 </script>
 </head>
