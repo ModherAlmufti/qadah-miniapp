@@ -20,15 +20,17 @@
 </head>
 <body>
   <h1>اختبار تسجيل الدخول (SuperQi)</h1>
-  <p class="sub">صفحة اختبار للمطوّر فقط. لا تُرسل أي بيانات إلى أي خادم.</p>
+  <p class="sub">صفحة اختبار للمطوّر فقط. الزر الأول لا يرسل شيئاً، والزر الثاني يرسل الكود إلى دالة superqi-login فقط.</p>
 
   <button type="button" id="runBtn">اختبار my.getAuthCode (auth_base)</button>
+  <button type="button" id="loginBtn">اختبار الدخول الكامل (superqi-login)</button>
   <button type="button" class="ghost" id="copyBtn">نسخ النتيجة</button>
   <a href="index.html">العودة للتطبيق</a>
 
   <div class="box" id="env"></div>
   <div class="box" id="out">اضغط الزر لبدء الاختبار.</div>
 
+<script src="config.js"></script>
 <script>
   var out = document.getElementById("out");
   var log = [];
@@ -67,6 +69,62 @@
       fail: function (err) {
         log.push('<span class="bad">FAIL</span> after ' + (Date.now() - started) + " ms");
         log.push("error: " + esc(show(err)));
+        out.innerHTML = log.join("\n");
+      }
+    });
+  });
+
+  // Full login test: real authCode -> superqi-login Edge Function -> session.
+  // Shows only the start of the session token. The authCode is single-use.
+  document.getElementById("loginBtn").addEventListener("click", function () {
+    log = [];
+    if (typeof my === "undefined" || !my || typeof my.getAuthCode !== "function") {
+      log.push('<span class="bad">my.getAuthCode غير متاح. افتح الصفحة من داخل SuperQi.</span>');
+      out.innerHTML = log.join("\n");
+      return;
+    }
+    var started = Date.now();
+    log.push("1) my.getAuthCode ...");
+    out.innerHTML = log.join("\n");
+    my.getAuthCode({
+      scopes: ["auth_base"],
+      success: function (res) {
+        var code = res && res.authCode ? String(res.authCode) : "";
+        log.push('<span class="ok">authCode OK</span> (length ' + code.length + ") after " + (Date.now() - started) + " ms");
+        log.push("2) POST superqi-login ...");
+        out.innerHTML = log.join("\n");
+        var t2 = Date.now();
+        fetch(SUPABASE_URL + "/functions/v1/superqi-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_KEY,
+            Authorization: "Bearer " + SUPABASE_KEY
+          },
+          body: JSON.stringify({ authCode: code })
+        })
+          .then(function (r) { return r.text().then(function (t) { return { status: r.status, text: t }; }); })
+          .then(function (r) {
+            var data = null;
+            try { data = JSON.parse(r.text); } catch (e) {}
+            log.push("HTTP " + r.status + " after " + (Date.now() - t2) + " ms");
+            if (data && data.sessionToken) {
+              log.push('<span class="ok">LOGIN SUCCESS</span>');
+              log.push("sessionToken: " + esc(String(data.sessionToken).slice(0, 8)) + "... (length " + String(data.sessionToken).length + ")");
+              log.push("expiresAt: " + esc(data.expiresAt || ""));
+            } else {
+              log.push('<span class="bad">LOGIN FAILED</span>');
+              log.push("response: " + esc(r.text.slice(0, 600)));
+            }
+            out.innerHTML = log.join("\n");
+          })
+          .catch(function (e) {
+            log.push('<span class="bad">NETWORK ERROR</span> ' + esc(String(e && e.message || e)));
+            out.innerHTML = log.join("\n");
+          });
+      },
+      fail: function (err) {
+        log.push('<span class="bad">getAuthCode FAIL</span> ' + esc(show(err)));
         out.innerHTML = log.join("\n");
       }
     });
