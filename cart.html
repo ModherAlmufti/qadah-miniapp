@@ -239,7 +239,20 @@
       "</div>";
   }
 
+  // Step 3: prefill the order owner from the SuperQi profile (name/phone typed
+  // on an earlier order). Only empty fields are filled; the user can edit them.
+  function prefillOwner() {
+    if (typeof SuperQi === "undefined" || !SuperQi.profile) return;
+    var p = SuperQi.profile();
+    if (!p) return;
+    [["cName", p.name], ["cPhone", p.phone], ["cEmail", p.email]].forEach(function (f) {
+      var el = document.getElementById(f[0]);
+      if (el && !el.value && f[1]) el.value = f[1];
+    });
+  }
+
   function openModal() {
+    prefillOwner();
     modalError.classList.remove("show");
     overlay.classList.add("open");
   }
@@ -305,6 +318,9 @@
       var data = await res.json();
 
       if (data && data.ok) {
+        // Step 3: attribute the order to the SuperQi user (customers.superqi_id).
+        // Runs in the background; the success screen never waits for it.
+        if (typeof SuperQi !== "undefined" && SuperQi.linkOrder) SuperQi.linkOrder(data.order);
         showSuccess(data.order);
       } else {
         var code = data && data.error;
