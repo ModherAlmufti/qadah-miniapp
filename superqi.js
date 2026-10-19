@@ -233,6 +233,125 @@ const SuperQi = {
       });
     });
   },
+
+  // ---------------------------------------------------------------------------
+  // Payment flow (step 4, 19 Oct). The order is created by create_order first
+  // (unchanged); then superqi-pay-create returns the cashier URL, tradePay
+  // opens it, and the server confirms with Qi before the app says "paid".
+  // Every call resolves (never throws). States the caller gets:
+  //   paid      money confirmed (or tradePay 9000)
+  //   pending   unknown yet (8000 / 6004 / 6002 / Qi "U"); check again, do not pay twice
+  //   failed    nothing charged (4000 / 6001 cancel / Qi "F"); the cart is kept
+  //   error     could not start (no login, network, bridge missing)
+  // ---------------------------------------------------------------------------
+  PAY_KEY: "qadah_qi_pending_pay",
+
+  _orderRef: function (order) {
+    return { orderId: (order && (order.id || order.order_id)) || null, orderCode: (order && order.order_code) || null };
+  },
+
+  // The order waiting for payment (kept so "retry" pays the same order).
+  pendingPayment: function () {
+    try {
+      var p = JSON.parse(localStorage.getItem(this.PAY_KEY) || "null");
+      if (p && Date.now() - p.at < 2 * 3600000) return p;
+    } catch (e) {}
+    return null;
+  },
+  _savePending: function (p) {
+    try { localStorage.setItem(this.PAY_KEY, JSON.stringify(p)); } catch (e) {}
+  },
+  clearPendingPayment: function () {
+    try { localStorage.removeItem(this.PAY_KEY); } catch (e) {}
+  },
+
+  // Calls superqi-pay-create, handling an expired session and an order that
+  // is not linked yet (link it, then try once more).
+  _payCall: function (order, action) {
+    var self = this;
+    var ref = self._orderRef(order);
+    function call(session, retried) {
+      if (!session) return { state: "error", error: "login" };
+      return self._post("superqi-pay-create", {
+        sessionToken: session.sessionToken, orderId: ref.orderId, orderCode: ref.orderCode, action: action,
+      }).then(function (r) {
+        if (r.status === 200 && r.data.state) return r.data;
+        if (!retried && r.data.reauth) {
+          self.clearSession();
+          return self.login(true).then(function (s) { return call(s, true); });
+        }
+        if (!retried && r.data.error === "order_not_linked") {
+          return self.linkOrder(order).then(function () { return call(session, true); });
+        }
+        console.warn("[qadah] pay-create", action, r.status, r.data.error || "", r.data.message || "");
+        return { state: "error", error: r.data.error || "http_" + r.status };
+      });
+    }
+    return self.login().then(function (s) { return call(s, false); }).catch(function (e) {
+      console.warn("[qadah] pay-create error", e && e.message);
+      return { state: "error", error: "network" };
+    });
+  },
+
+  // Ask the server for the latest state (it asks Qi and marks the order paid).
+  checkPayment: function (order) {
+    var self = this;
+    return self._payCall(order, "status").then(function (r) {
+      if (r.state === "paid") self.clearPendingPayment();
+      return r;
+    });
+  },
+
+  // Full flow for one order: get the cashier URL, open tradePay, read the result.
+  payOrder: function (order) {
+    var self = this;
+    if (window.QADAH_IN_SUPERQI !== true) return Promise.resolve({ state: "error", error: "not_in_app" });
+    var ref = self._orderRef(order);
+    var prev = self.pendingPayment();
+    var same = prev && ((ref.orderId && prev.orderId === ref.orderId) || (!ref.orderId && prev.orderCode === ref.orderCode));
+    var saved = { orderId: ref.orderId, orderCode: ref.orderCode, total: order.total, url: same ? prev.url : null, at: Date.now() };
+    self._savePending(saved);
+
+    return self._payCall(order, "pay").then(function (r) {
+      if (r.state === "redirect") {
+        saved.url = r.paymentUrl; saved.at = Date.now(); self._savePending(saved);
+        return self._openCashier(order, r.paymentUrl);
+      }
+      // Qi says the earlier attempt is still open: reopen the same cashier page.
+      if (r.state === "pending" && r.resultCode === "PAYMENT_IN_PROCESS" && saved.url) {
+        return self._openCashier(order, saved.url);
+      }
+      if (r.state === "paid") self.clearPendingPayment();
+      return r;
+    });
+  },
+
+  _openCashier: function (order, url) {
+    var self = this;
+    return self.tradePay(url).then(function (res) {
+      return self._readTradePay(order, res);
+    }, function (err) {
+      if (err && err.message === "Not running inside SuperQi") return { state: "error", error: "bridge" };
+      return self._readTradePay(order, err);
+    });
+  },
+
+  // tradePay result codes (SuperQi docs): 9000 success, 8000 processing,
+  // 4000 failed, 6001 cancelled, 6002 network error, 6004 unknown.
+  _readTradePay: function (order, res) {
+    var self = this;
+    var code = String((res && (res.resultCode || res.error || res.errorCode)) || "");
+    console.log("[qadah] tradePay", code);
+    if (code === "9000") {
+      // Paid per the wallet. Ask the server to confirm and mark the order paid.
+      self.checkPayment(order);
+      self.clearPendingPayment();
+      return { state: "paid", tradePayCode: code };
+    }
+    if (code === "8000" || code === "6004" || code === "6002") return { state: "pending", tradePayCode: code };
+    if (code === "6001") return { state: "failed", tradePayCode: code, cancelled: true };
+    return { state: "failed", tradePayCode: code || "unknown" };
+  },
 };
 
 // Start the silent login as soon as any page loads inside SuperQi, then retry
