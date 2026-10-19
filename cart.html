@@ -30,6 +30,16 @@
     });
   })();
 </script>
+<style>
+  /* Step 4: payment result screens (reuse .success, .btn-primary, .btn-secondary) */
+  .pay-failed .tick { background: var(--rose-soft, #f4e4df); color: var(--rose-strong); }
+  .pay-wait .tick { background: var(--cream, #f5ede0); }
+  .pay-text { color: var(--ink); font-size: 15px; line-height: 1.7; margin: 6px auto 4px; max-width: 320px; }
+  .pay-code { color: var(--muted); font-size: 14px; margin: 6px 0 14px; }
+  .pay-actions { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+  .pay-actions button { width: 100%; }
+  .pay-help { margin-top: 22px; color: var(--muted); font-size: 13px; }
+</style>
 </head>
 <body>
 <div class="promo">توصيل مجاني للطلبات فوق ١٥٠٬٠٠٠ د.ع · بغداد في نفس اليوم</div>
@@ -224,7 +234,7 @@
       '<button type="button" class="checkout-btn" data-action="checkout">إتمام الطلب</button>';
   }
 
-  function showSuccess(order) {
+  function showSuccess(order, paid) {
     overlay.classList.remove("open");
     Cart.clear();
     var total = formatPrice(order.total) + " د.ع";
@@ -232,12 +242,128 @@
     view.innerHTML =
       '<div class="success">' +
         '<div class="tick">✓</div>' +
-        "<h2>تم استلام طلبك</h2>" +
-        '<div class="code">رقم الطلب: ' + code + "</div>" +
-        '<div class="total">الإجمالي: ' + total + "</div>" +
+        "<h2>" + (paid ? "تم الدفع واستلام طلبك" : "تم استلام طلبك") + "</h2>" +
+        '<div class="code">رقم الطلب: <span dir="ltr">' + code + "</span></div>" +
+        '<div class="total">' + (paid ? "المبلغ المدفوع: " : "الإجمالي: ") + total + "</div>" +
         '<a href="index.html">العودة إلى الكتالوج</a>' +
       "</div>";
   }
+
+  // ---------------------------------------------------------------------------
+  // Step 4: payment inside SuperQi (Qi only, no method picker).
+  // create_order runs first exactly as before; then the order is linked to the
+  // Qi user and paid with my.tradePay. The cart is cleared only once paid.
+  // Outside SuperQi nothing here runs and the old success screen is shown.
+  // ---------------------------------------------------------------------------
+  var PAY_ORDER = null;     // the order being paid (from create_order)
+  var PAY_POLL = null;
+
+  var WHATSAPP_HELP =
+    '<div class="pay-help">تحتاج مساعدة؟ راسلنا على واتساب <span dir="ltr">0775 454 9417</span></div>';
+
+  function payScreen(kind, title, text, buttons) {
+    overlay.classList.remove("open");
+    var code = PAY_ORDER && PAY_ORDER.order_code ? escapeHtml(PAY_ORDER.order_code) : "";
+    view.innerHTML =
+      '<div class="success pay-' + kind + '">' +
+        '<div class="tick">' + (kind === "failed" ? "!" : "…") + "</div>" +
+        "<h2>" + title + "</h2>" +
+        '<p class="pay-text">' + text + "</p>" +
+        (code ? '<div class="pay-code">رقم الطلب: <span dir="ltr">' + code + "</span></div>" : "") +
+        '<div class="pay-actions">' + (buttons || "") + "</div>" +
+        WHATSAPP_HELP +
+      "</div>";
+  }
+
+  function showPaying() {
+    payScreen("wait", "جارٍ فتح صفحة الدفع", "لحظات، نجهّز صفحة الدفع.", "");
+  }
+
+  function showDeclined(cancelled) {
+    stopPoll();
+    payScreen("failed", "لم تتم عملية الدفع",
+      (cancelled ? "ألغيت الدفع. " : "") + "لم يُخصم أي مبلغ، وسلتك محفوظة كما هي.",
+      '<button type="button" class="btn-primary" data-pay="retry">إعادة المحاولة</button>' +
+      '<button type="button" class="btn-secondary" data-pay="cart">العودة إلى السلة</button>');
+  }
+
+  function showPending() {
+    payScreen("wait", "نتأكد من الدفع",
+      "لم يصلنا تأكيد الدفع بعد. لا تدفع مرة ثانية، سيتأكد طلبك تلقائياً إذا تم خصم المبلغ.",
+      // No "back to cart" here, so the same items are not ordered and paid twice.
+      '<button type="button" class="btn-primary" data-pay="check">تحقق من الدفع</button>');
+    startPoll();
+  }
+
+  function onPaid() {
+    stopPoll();
+    SuperQi.clearPendingPayment();
+    showSuccess(PAY_ORDER, true);
+  }
+
+  function handlePayResult(r) {
+    if (r.state === "paid") return onPaid();
+    if (r.state === "pending") return showPending();
+    if (r.state === "failed" && !r.cancelled && r.tradePayCode) {
+      // Unclear wallet answer: ask the server once before saying "not charged".
+      return SuperQi.checkPayment(PAY_ORDER).then(function (c) {
+        if (c.state === "paid") onPaid();
+        else showDeclined(false);
+      });
+    }
+    showDeclined(!!r.cancelled);
+  }
+
+  function startPayment(order) {
+    PAY_ORDER = order;
+    showPaying();
+    // Link first (step 3), so the server sees the order on this Qi user.
+    return SuperQi.linkOrder(order).then(function () {
+      return SuperQi.payOrder(order);
+    }).then(handlePayResult, function () { showDeclined(false); });
+  }
+
+  // While pending: ask the server a few times (it asks Qi), then leave the button.
+  function startPoll() {
+    stopPoll();
+    var waits = [3000, 5000, 8000, 15000, 30000];
+    var i = 0;
+    function next() {
+      if (i >= waits.length) return;
+      PAY_POLL = setTimeout(function () {
+        SuperQi.checkPayment(PAY_ORDER).then(function (c) {
+          if (c.state === "paid") onPaid();
+          else if (c.state === "failed") showDeclined(false);
+          else { i++; next(); }
+        });
+      }, waits[i]);
+    }
+    next();
+  }
+  function stopPoll() {
+    if (PAY_POLL) clearTimeout(PAY_POLL);
+    PAY_POLL = null;
+  }
+
+  view.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-pay]");
+    if (!b || !PAY_ORDER) return;
+    var what = b.getAttribute("data-pay");
+    if (what === "retry") {
+      startPayment(PAY_ORDER);
+    } else if (what === "check") {
+      b.disabled = true;
+      b.textContent = "جارٍ التحقق...";
+      SuperQi.checkPayment(PAY_ORDER).then(function (c) {
+        if (c.state === "paid") onPaid();
+        else if (c.state === "failed") showDeclined(false);
+        else { b.disabled = false; b.textContent = "تحقق من الدفع"; }
+      });
+    } else if (what === "cart") {
+      stopPoll();
+      renderCart();
+    }
+  });
 
   // Step 3: prefill the order owner from the SuperQi profile (name/phone typed
   // on an earlier order). Only empty fields are filled; the user can edit them.
@@ -318,10 +444,14 @@
       var data = await res.json();
 
       if (data && data.ok) {
-        // Step 3: attribute the order to the SuperQi user (customers.superqi_id).
-        // Runs in the background; the success screen never waits for it.
-        if (typeof SuperQi !== "undefined" && SuperQi.linkOrder) SuperQi.linkOrder(data.order);
-        showSuccess(data.order);
+        if (window.QADAH_IN_SUPERQI === true && typeof SuperQi !== "undefined" && SuperQi.payOrder) {
+          // Step 4: inside SuperQi the order is linked (step 3) and then paid.
+          startPayment(data.order);
+        } else {
+          // Outside SuperQi: unchanged (order created, unpaid, success screen).
+          if (typeof SuperQi !== "undefined" && SuperQi.linkOrder) SuperQi.linkOrder(data.order);
+          showSuccess(data.order);
+        }
       } else {
         var code = data && data.error;
         var msg =
@@ -366,6 +496,17 @@
   });
 
   (async function load() {
+    // Step 4: an order paid after the user left this page (webhook / late
+    // confirmation) clears the cart here instead of showing it again.
+    if (window.QADAH_IN_SUPERQI === true && typeof SuperQi !== "undefined" && SuperQi.pendingPayment) {
+      var pend = SuperQi.pendingPayment();
+      if (pend && Cart.items().length) {
+        var ref = { id: pend.orderId, order_code: pend.orderCode, total: pend.total };
+        var st = await SuperQi.checkPayment(ref);
+        if (st.state === "paid") { PAY_ORDER = ref; onPaid(); return; }
+        if (st.state === "failed" || st.state === "none") SuperQi.clearPendingPayment();
+      }
+    }
     var items = Cart.items();
     if (!items.length) { showEmpty(); return; }
     try {
