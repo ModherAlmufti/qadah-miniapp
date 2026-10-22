@@ -73,6 +73,7 @@
 <script src="cart.js"></script>
 <script src="superqi.js"></script>
 <script src="ui.js"></script>
+<script src="pgallery.js"></script>
 <script>
   var view = document.getElementById("view");
 
@@ -98,7 +99,7 @@
 
     view.innerHTML =
       '<div class="pd">' +
-        '<div class="pd-media ph">' + (src ? '<img src="' + esc(src) + '" alt="' + esc(p.name_ar || "") + '" onerror="this.remove()">' : "") + badge + "</div>" +
+        '<div class="pd-media ph" id="pdMedia">' + badge + "</div>" +
         (tagHtml ? '<div class="pd-tags">' + tagHtml + "</div>" : '<div style="height:16px"></div>') +
         '<h1 class="pd-name">' + esc(p.name_ar || p.name_en || "") + "</h1>" +
         (p.name_en ? '<p class="pd-en">' + esc(p.name_en) + "</p>" : "") +
@@ -124,6 +125,11 @@
         (p.code != null ? '<div class="pd-code">رقم الهدية: ' + esc(p.code) + "</div>" : "") +
       "</div>" +
       '<section class="rel" id="rel" hidden><h2 id="relTitle">قد تعجبك أيضاً</h2><div class="rel-row" id="relRow"></div></section>';
+
+    /* الغلاف + الصور الإضافية (pgallery.js)؛ إن لم يُحمَّل الملف نعرض الغلاف فقط كما كان */
+    var media = document.getElementById("pdMedia");
+    if (window.QadahPGallery) QadahPGallery.mount(media, src, p.gallery, p.name_ar);
+    else if (src) media.insertAdjacentHTML("afterbegin", '<img src="' + esc(src) + '" alt="' + esc(p.name_ar || "") + '" onerror="this.remove()">');
 
     var qty = 1, qtyVal = document.getElementById("qtyVal");
     document.getElementById("minus").addEventListener("click", function () { if (qty > 1) { qty--; qtyVal.textContent = qty; } });
