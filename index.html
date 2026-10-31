@@ -69,6 +69,9 @@
   </div>
 </section>
 
+<!-- Moving banner: products picked in the dashboard (pbanner.js) -->
+<section id="bannerSec" hidden></section>
+
 <!-- Trust -->
 <section class="tgrid" aria-label="لماذا قدّاح">
   <div class="titem">
@@ -109,6 +112,7 @@
     <input id="search" type="search" placeholder="ابحث باسم الهدية" autocomplete="off">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
   </label>
+  <div class="hchips small" id="colorChips" role="group" aria-label="اللون" hidden style="padding-top:0;margin:-2px 0 10px"></div>
   <div class="ggrid" id="grid"></div>
 </section>
 
@@ -146,6 +150,13 @@
 <script src="cart.js"></script>
 <script src="superqi.js"></script>
 <script src="ui.js"></script>
+<script src="pbanner.js"></script>
+<style>
+  #colorChips[hidden], #bannerSec[hidden] { display: none; }
+  .csw { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(1,24,58,.2); flex-shrink: 0; }
+  .csw.mix { background: conic-gradient(#c62828,#f2c94c,#4caf50,#4a74c9,#8e5bb5,#e991a8,#c62828); }
+  .hchip[aria-pressed="true"] .csw { border-color: rgba(251,246,238,.6); }
+</style>
 <script>
   var BUDGETS = [
     { id: "low",  label: "أقل من ٧٥ ألف",     test: function (p) { return p.price < 75000; } },
@@ -153,13 +164,34 @@
     { id: "high", label: "أكثر من ١٥٠ ألف",   test: function (p) { return p.price > 150000; } },
     { id: "any",  label: "لا يهم",            test: function () { return true; } }
   ];
-  var S = { all: [], occasions: [], recipients: [], occ: "", rec: "", q: "", wishOnly: false,
+  var S = { all: [], occasions: [], recipients: [], colors: [], occ: "", rec: "", col: "", q: "", wishOnly: false,
             f: { step: 0, rec: null, occ: null, budget: null } };
   var $ = function (id) { return document.getElementById(id); };
   function nameOf(list, id) { var x = list.find(function (t) { return t.id === id; }); return x ? x.name_ar : ""; }
 
+  // ---------- colors ----------
+  function swatch(c) { return c.hex ? '<span class="csw" style="background:' + esc(c.hex) + '"></span>' : '<span class="csw mix"></span>'; }
+  function renderColors() {
+    var box = $("colorChips");
+    if (S.colors.length < 2 && !S.col) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<span class="hchips-label">اللون:</span>' + S.colors.map(function (c) {
+      return '<button type="button" class="hchip" data-col="' + esc(c.id) + '" aria-pressed="' + (!S.wishOnly && S.col === c.id) + '">' + swatch(c) + esc(c.name_ar) + "</button>";
+    }).join("");
+  }
+  $("colorChips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-col]"); if (!b) return;
+    var v = b.getAttribute("data-col"); S.col = S.col === v ? "" : v; S.wishOnly = false; renderChips(); renderGrid();
+  });
+  function renderBanner() {
+    if (!window.QadahBanner) return;
+    QadahBanner.mount($("bannerSec"), S.all.filter(function (p) { return p.in_banner; }),
+      { img: photo, price: function (p) { return formatPrice(p.price); }, title: "من تشكيلتنا" });
+  }
+
   // ---------- chips ----------
   function renderChips() {
+    renderColors();
     var sec = $("occasions");
     if (!S.occasions.length) { sec.hidden = true; return; }
     sec.hidden = false;
@@ -189,14 +221,15 @@
       if (S.wishOnly && wish.indexOf(p.id) === -1) return false;
       if (S.occ && (p.occasion_ids || []).indexOf(S.occ) === -1) return false;
       if (S.rec && (p.recipient_ids || []).indexOf(S.rec) === -1) return false;
+      if (S.col && (p.color_ids || []).indexOf(S.col) === -1) return false;
       if (q && ((p.name_ar || "") + " " + (p.name_en || "") + " " + (p.code || "")).toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
   }
   function title() {
     if (S.wishOnly) return "المفضلة";
-    var o = nameOf(S.occasions, S.occ), r = nameOf(S.recipients, S.rec);
-    return o && r ? o + " · " + r : (o || r || "كل الهدايا");
+    var parts = [nameOf(S.occasions, S.occ), nameOf(S.recipients, S.rec), nameOf(S.colors, S.col)].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "كل الهدايا";
   }
   function card(p) {
     var src = photo(p), wished = Wish.has(p.id);
@@ -224,11 +257,11 @@
     grid.classList.remove("skel");
     $("gridTitle").textContent = title();
     $("count").textContent = countWord(list.length);
-    $("clearBtn").hidden = !(S.occ || S.rec || S.q || S.wishOnly);
+    $("clearBtn").hidden = !(S.occ || S.rec || S.col || S.q || S.wishOnly);
     if (!list.length) {
       grid.innerHTML = S.wishOnly
         ? '<div class="gstate"><b>لا توجد هدايا في المفضلة بعد</b>اضغط على القلب في أي هدية لتحفظها هنا.</div>'
-        : '<div class="gstate"><b>لا توجد هدايا مطابقة</b>جرّب مناسبة أخرى أو امسح البحث.<br><button type="button" onclick="clearFilters()">عرض كل الهدايا</button></div>';
+        : '<div class="gstate"><b>لا توجد هدايا مطابقة</b>جرّب مناسبة أو لوناً آخر، أو امسح البحث.<br><button type="button" onclick="clearFilters()">عرض كل الهدايا</button></div>';
       return;
     }
     grid.innerHTML = list.map(card).join("");
@@ -255,11 +288,11 @@
     $("wishNav").textContent = n ? "المفضلة (" + n + ")" : "المفضلة";
   }
   function showWishlist() {
-    S.wishOnly = true; S.occ = ""; S.rec = ""; S.q = ""; $("search").value = "";
+    S.wishOnly = true; S.occ = ""; S.rec = ""; S.col = ""; S.q = ""; $("search").value = "";
     renderChips(); renderGrid(); $("gifts").scrollIntoView({ behavior: "smooth" });
   }
   function clearFilters() {
-    S.occ = ""; S.rec = ""; S.q = ""; S.wishOnly = false; $("search").value = "";
+    S.occ = ""; S.rec = ""; S.col = ""; S.q = ""; S.wishOnly = false; $("search").value = "";
     renderChips(); renderGrid();
   }
   function goSearch() { $("gifts").scrollIntoView({ behavior: "smooth" }); setTimeout(function () { $("search").focus(); }, 300); }
@@ -327,7 +360,10 @@
       return '<div class="gcard"><div class="gcard-media"></div><div class="gcard-body"><div class="gmeta">تحميل</div><div class="gname">تحميل اسم الهدية</div><div class="gprice">00000</div></div></div>';
     }).join("");
     try {
-      S.all = await fetchCatalog("select=id,code,name_ar,name_en,price,featured,image_url,occasion_ids,recipient_ids,badge&order=featured.desc,code.asc");
+      var cols = "select=id,code,name_ar,name_en,price,featured,image_url,occasion_ids,recipient_ids,badge";
+      // Display order from the dashboard; falls back to the old order if the new columns are not there yet.
+      try { S.all = await fetchCatalog(cols + ",sort_order,in_banner,color_ids&order=sort_order.asc,code.asc"); }
+      catch (e1) { S.all = await fetchCatalog(cols + "&order=featured.desc,code.asc"); }
     } catch (err) {
       console.error(err);
       grid.classList.remove("skel");
@@ -339,12 +375,17 @@
     // Only show options that actually have products, so a tap never lands on an empty list.
     S.occasions = t.occasions.filter(function (o) { return S.all.some(function (p) { return (p.occasion_ids || []).indexOf(o.id) !== -1; }); });
     S.recipients = t.recipients.filter(function (r) { return S.all.some(function (p) { return (p.recipient_ids || []).indexOf(r.id) !== -1; }); });
+    try {
+      var cl = await rest("product_colors?select=id,name_ar,hex,sort_order&is_active=eq.true&order=sort_order.asc");
+      S.colors = cl.filter(function (c) { return S.all.some(function (p) { return (p.color_ids || []).indexOf(c.id) !== -1; }); });
+    } catch (e2) { S.colors = []; }
     var h = new URLSearchParams(location.hash.replace(/^#/, ""));
     if (h.get("occ") && S.occasions.some(function (o) { return o.id === h.get("occ"); })) S.occ = h.get("occ");
     if (h.get("rec") && S.recipients.some(function (r) { return r.id === h.get("rec"); })) S.rec = h.get("rec");
+    if (h.get("col") && S.colors.some(function (c) { return c.id === h.get("col"); })) S.col = h.get("col");
     if (location.hash === "#wish") S.wishOnly = true;
-    renderChips(); renderGrid(); renderFinder(); updateWishNav();
-    if (S.occ || S.rec || S.wishOnly) $("gifts").scrollIntoView();
+    renderBanner(); renderChips(); renderGrid(); renderFinder(); updateWishNav();
+    if (S.occ || S.rec || S.col || S.wishOnly) $("gifts").scrollIntoView();
   })();
 </script>
 </body>
