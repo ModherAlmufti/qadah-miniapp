@@ -112,6 +112,7 @@
     <input id="search" type="search" placeholder="ابحث باسم الهدية" autocomplete="off">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
   </label>
+  <div class="hchips small" id="catChips" role="group" aria-label="النوع" hidden style="padding-top:0;margin:-2px 0 6px"></div>
   <div class="hchips small" id="colorChips" role="group" aria-label="اللون" hidden style="padding-top:0;margin:-2px 0 10px"></div>
   <div class="ggrid" id="grid"></div>
 </section>
@@ -152,7 +153,7 @@
 <script src="ui.js"></script>
 <script src="pbanner.js"></script>
 <style>
-  #colorChips[hidden], #bannerSec[hidden] { display: none; }
+  #colorChips[hidden], #catChips[hidden], #bannerSec[hidden] { display: none; }
   .csw { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(1,24,58,.2); flex-shrink: 0; }
   .csw.mix { background: conic-gradient(#c62828,#f2c94c,#4caf50,#4a74c9,#8e5bb5,#e991a8,#c62828); }
   .hchip[aria-pressed="true"] .csw { border-color: rgba(251,246,238,.6); }
@@ -164,10 +165,24 @@
     { id: "high", label: "أكثر من ١٥٠ ألف",   test: function (p) { return p.price > 150000; } },
     { id: "any",  label: "لا يهم",            test: function () { return true; } }
   ];
-  var S = { all: [], occasions: [], recipients: [], colors: [], occ: "", rec: "", col: "", q: "", wishOnly: false,
+  var S = { all: [], occasions: [], recipients: [], colors: [], cats: [], occ: "", rec: "", col: "", cat: "", q: "", wishOnly: false,
             f: { step: 0, rec: null, occ: null, budget: null } };
   var $ = function (id) { return document.getElementById(id); };
   function nameOf(list, id) { var x = list.find(function (t) { return t.id === id; }); return x ? x.name_ar : ""; }
+
+  // ---------- types (ورد، زنابق، صناديق...) ----------
+  function renderCats() {
+    var box = $("catChips");
+    if (S.cats.length < 2 && !S.cat) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<span class="hchips-label">النوع:</span>' + [""].concat(S.cats).map(function (n) {
+      return '<button type="button" class="hchip" data-cat="' + esc(n) + '" aria-pressed="' + (!S.wishOnly && S.cat === n) + '">' + (n ? esc(n) : "الكل") + "</button>";
+    }).join("");
+  }
+  $("catChips").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cat]"); if (!b) return;
+    S.cat = b.getAttribute("data-cat"); S.wishOnly = false; renderChips(); renderGrid();
+  });
 
   // ---------- colors ----------
   function swatch(c) { return c.hex ? '<span class="csw" style="background:' + esc(c.hex) + '"></span>' : '<span class="csw mix"></span>'; }
@@ -191,6 +206,7 @@
 
   // ---------- chips ----------
   function renderChips() {
+    renderCats();
     renderColors();
     var sec = $("occasions");
     if (!S.occasions.length) { sec.hidden = true; return; }
@@ -222,13 +238,14 @@
       if (S.occ && (p.occasion_ids || []).indexOf(S.occ) === -1) return false;
       if (S.rec && (p.recipient_ids || []).indexOf(S.rec) === -1) return false;
       if (S.col && (p.color_ids || []).indexOf(S.col) === -1) return false;
+      if (S.cat && p.category !== S.cat) return false;
       if (q && ((p.name_ar || "") + " " + (p.name_en || "") + " " + (p.code || "")).toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
   }
   function title() {
     if (S.wishOnly) return "المفضلة";
-    var parts = [nameOf(S.occasions, S.occ), nameOf(S.recipients, S.rec), nameOf(S.colors, S.col)].filter(Boolean);
+    var parts = [S.cat, nameOf(S.occasions, S.occ), nameOf(S.recipients, S.rec), nameOf(S.colors, S.col)].filter(Boolean);
     return parts.length ? parts.join(" · ") : "كل الهدايا";
   }
   function card(p) {
@@ -257,11 +274,11 @@
     grid.classList.remove("skel");
     $("gridTitle").textContent = title();
     $("count").textContent = countWord(list.length);
-    $("clearBtn").hidden = !(S.occ || S.rec || S.col || S.q || S.wishOnly);
+    $("clearBtn").hidden = !(S.occ || S.rec || S.col || S.cat || S.q || S.wishOnly);
     if (!list.length) {
       grid.innerHTML = S.wishOnly
         ? '<div class="gstate"><b>لا توجد هدايا في المفضلة بعد</b>اضغط على القلب في أي هدية لتحفظها هنا.</div>'
-        : '<div class="gstate"><b>لا توجد هدايا مطابقة</b>جرّب مناسبة أو لوناً آخر، أو امسح البحث.<br><button type="button" onclick="clearFilters()">عرض كل الهدايا</button></div>';
+        : '<div class="gstate"><b>لا توجد هدايا مطابقة</b>جرّب نوعاً أو مناسبة أو لوناً آخر، أو امسح البحث.<br><button type="button" onclick="clearFilters()">عرض كل الهدايا</button></div>';
       return;
     }
     grid.innerHTML = list.map(card).join("");
@@ -288,11 +305,11 @@
     $("wishNav").textContent = n ? "المفضلة (" + n + ")" : "المفضلة";
   }
   function showWishlist() {
-    S.wishOnly = true; S.occ = ""; S.rec = ""; S.col = ""; S.q = ""; $("search").value = "";
+    S.wishOnly = true; S.occ = ""; S.rec = ""; S.col = ""; S.cat = ""; S.q = ""; $("search").value = "";
     renderChips(); renderGrid(); $("gifts").scrollIntoView({ behavior: "smooth" });
   }
   function clearFilters() {
-    S.occ = ""; S.rec = ""; S.col = ""; S.q = ""; S.wishOnly = false; $("search").value = "";
+    S.occ = ""; S.rec = ""; S.col = ""; S.cat = ""; S.q = ""; S.wishOnly = false; $("search").value = "";
     renderChips(); renderGrid();
   }
   function goSearch() { $("gifts").scrollIntoView({ behavior: "smooth" }); setTimeout(function () { $("search").focus(); }, 300); }
@@ -360,7 +377,7 @@
       return '<div class="gcard"><div class="gcard-media"></div><div class="gcard-body"><div class="gmeta">تحميل</div><div class="gname">تحميل اسم الهدية</div><div class="gprice">00000</div></div></div>';
     }).join("");
     try {
-      var cols = "select=id,code,name_ar,name_en,price,featured,image_url,occasion_ids,recipient_ids,badge";
+      var cols = "select=id,code,name_ar,name_en,price,category,featured,image_url,occasion_ids,recipient_ids,badge";
       // Display order from the dashboard; falls back to the old order if the new columns are not there yet.
       try { S.all = await fetchCatalog(cols + ",sort_order,in_banner,color_ids&order=sort_order.asc,code.asc"); }
       catch (e1) { S.all = await fetchCatalog(cols + "&order=featured.desc,code.asc"); }
@@ -379,13 +396,22 @@
       var cl = await rest("product_colors?select=id,name_ar,hex,sort_order&is_active=eq.true&order=sort_order.asc");
       S.colors = cl.filter(function (c) { return S.all.some(function (p) { return (p.color_ids || []).indexOf(c.id) !== -1; }); });
     } catch (e2) { S.colors = []; }
+    // Types are managed in the dashboard (product_categories): only visible types that have products.
+    // If the table is not there yet, build them from the products themselves.
+    try {
+      var kk = await rest("product_categories?select=name_ar,sort_order&is_active=eq.true&order=sort_order.asc");
+      S.cats = kk.map(function (x) { return x.name_ar; }).filter(function (n) { return S.all.some(function (p) { return p.category === n; }); });
+    } catch (e3) {
+      S.cats = S.all.map(function (p) { return p.category; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+    }
     var h = new URLSearchParams(location.hash.replace(/^#/, ""));
     if (h.get("occ") && S.occasions.some(function (o) { return o.id === h.get("occ"); })) S.occ = h.get("occ");
     if (h.get("rec") && S.recipients.some(function (r) { return r.id === h.get("rec"); })) S.rec = h.get("rec");
     if (h.get("col") && S.colors.some(function (c) { return c.id === h.get("col"); })) S.col = h.get("col");
+    if (h.get("cat") && S.cats.indexOf(h.get("cat")) !== -1) S.cat = h.get("cat");
     if (location.hash === "#wish") S.wishOnly = true;
     renderBanner(); renderChips(); renderGrid(); renderFinder(); updateWishNav();
-    if (S.occ || S.rec || S.col || S.wishOnly) $("gifts").scrollIntoView();
+    if (S.occ || S.rec || S.col || S.cat || S.wishOnly) $("gifts").scrollIntoView();
   })();
 </script>
 </body>
